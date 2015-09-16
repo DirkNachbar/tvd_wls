@@ -39,8 +39,18 @@ WlsImageName=demowls
 WlsContainerName=wlsadmin
 ```
 Parameters explained:
+
+WLS Installation Parameters:
 * Version: the Oracle WebLogic Server 3-digit Release number
 * ImageName: Image creation name for the Oracle WebLogic Server image
 * JdkRpm: specifies the to be used JDK rpm, must be downloaded before from [http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html]
 * WlsSource: specifies the to be used WebLogic Server installation source, must be downloaded before from [http://www.oracle.com/technetwork/middleware/fusion-middleware/downloads/index.html]. You can only use the Generic WebLogic Installer
 * OracleLinux: specifies the required Oracle Enterprise Linux Base Image. **Important Note:** use only from oraclelinux:7 going, as with oraclelinux:6 are some bugs due to read-only filesystem problems
+ 
+WLS Domain Creation Parameters:
+* AdminPassword: defines the password for the WLS admin user named weblogic
+* AdminPort: defines the port for the AdminServer of the WLS Domain, must be unique
+* NodeManagerPort: defines the port for the NodeManager of the WLS Domain, must be unique
+* ManagedServerPort: defines the port for the Managed Server of the WLS Domain, must be unique
+* WlsImageName: defines the Image name for the to be created WLS Domain within Docker, must be unique
+* WlsContainerName: defines the docker name for the to be started WLS Admin Server, must be unique
