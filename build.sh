@@ -1,4 +1,16 @@
 #!/bin/bash
+#---------------------------------------------------------------------
+# 
+# Author: Dirk Nachbar, Trivadis AG, Bern Switzerland
+#
+# Purpose: Main build script for creating WebLogic Server Image
+#          and WebLogic Server Domain Creation
+#
+# Parameters: -i <ConfigFile>
+#             e.g.  ./build.sh -i build.ini
+#
+#
+#---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
 Usage() 
