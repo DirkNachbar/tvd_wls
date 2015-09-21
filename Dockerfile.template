@@ -1,0 +1,86 @@
+#===================================================
+#
+#
+#
+#===================================================
+
+#===================================================
+# Get the base image
+#===================================================
+FROM <TheOracleLinux>
+
+#===================================================
+# Maintainer
+#===================================================
+MAINTAINER Dirk Nachbar <dirk.nachbar@trivadis.com>
+
+#===================================================
+# Environment Variables required to build your WLS system
+# Please verify or align the value for:
+#    ENV JDK_RPM
+#===================================================
+#ENV JDK_RPM jdk-8u60-linux-x64.rpm
+ENV JDK_RPM <TheJdkRpm>
+ENV WLS_SOURCE <TheWlsSource>
+ENV JAVA_HOME /usr/java/default
+ENV CONFIG_JVM_ARGS -Djava.security.egd=file:/dev/./urandom
+
+#===================================================
+# Creating filesystem, user and group
+#===================================================
+RUN mkdir /u00 && \
+    mkdir /u00/etc && \
+    mkdir /u00/app && \
+    mkdir /u00/app/oraInventory && \
+    groupadd oinstall && \
+    useradd -b /u00 -m -g oinstall -s /bin/bash oracle && \
+    chown -R oracle:oinstall /u00 
+    
+#===================================================
+# Copy the required packages and files
+#===================================================
+COPY $WLS_SOURCE /u00/
+COPY $JDK_RPM /u00/
+COPY install.rsp /u00/
+COPY oraInst.loc /u00/
+
+
+USER root
+#===================================================
+# Installation via rpm of JDK and clean up
+#===================================================
+RUN rpm -i /u00/$JDK_RPM && \
+    rm /u00/$JDK_RPM
+
+#===================================================
+# Set the required limits
+#===================================================    
+RUN sed -i '/.*EOF/d' /etc/security/limits.conf && \
+    echo "oracle soft nofile 16384" >> /etc/security/limits.conf && \
+    echo "oracle hard nofile 16384" >> /etc/security/limits.conf && \
+    echo "# EOF"  >> /etc/security/limits.conf
+
+#===================================================
+# Set the required kernel paramater
+#=================================================== 
+RUN sed -i '/.*EOF/d' /etc/sysctl.conf && \
+    echo "net.core.rmem_max=4192608" >> /etc/sysctl.conf && \
+    echo "net.core.wmem_max=4192608" >> /etc/sysctl.conf && \
+    echo "# EOF"  >> /etc/security/limits.conf && \
+    sysctl -p
+
+#===================================================
+# Start with the installation of WLS
+#=================================================== 
+WORKDIR /u00
+USER oracle
+
+RUN java -jar $WLS_SOURCE -ignoreSysPrereqs -novalidation -silent -responseFile /u00/install.rsp -invPtrLoc /u00/oraInst.loc -jreLoc $JAVA_HOME && \
+    rm $WLS_SOURCE
+
+WORKDIR /u00/app/oracle/
+
+ENV PATH $PATH:/u00/app/oracle/product/weblogic-12.1.3/oracle_commom/common/bin
+
+CMD ["bash"]
+
