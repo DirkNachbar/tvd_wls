@@ -3,6 +3,8 @@
 # Author: Dirk Nachbar, Trivadis AD, Bern Switzerland
 #
 # Purpose: Template Dockerfile for WLS Domain Creation
+#          Placeholders will be automatically filled
+#          from values out of Configuration File
 #
 #================================================================= 
 
