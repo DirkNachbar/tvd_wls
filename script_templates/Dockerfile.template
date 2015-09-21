@@ -1,0 +1,62 @@
+#=================================================================
+#
+# Author: Dirk Nachbar, Trivadis AD, Bern Switzerland
+#
+# Purpose: Template Dockerfile for WLS Domain Creation
+#
+#================================================================= 
+
+# Pull base image
+#=========================================
+FROM <BaseImage>
+
+# Maintainer
+#=========================================
+MAINTAINER Dirk Nachbar <dirk.nachbar@trivadis.com>
+
+# WLS Configuration
+#=========================================
+ENV ADMIN_PASSWORD <AdminPassword>
+ENV ADMIN_PORT <AdminPort>
+ENV NM_PORT <NodeManagerPort>
+ENV MS_PORT <ManagedServerPort>
+ENV USER_MEM_ARGS -Xms256m -Xmx512m -XX:MaxPermSize=2048m
+
+# Add files required to build this image
+#=========================================
+COPY *.sh /u00/oracle/
+COPY *.py /u00/oracle/
+COPY *.jar /u00/oracle/
+
+# Root commands
+#=========================================
+USER root
+RUN echo ". /u00/app/oracle/product/weblogic-12.1.3/user_projects/domains/base_domain/bin/setDomainEnv.sh" >> /root/.bashrc && \
+    echo "export PATH=$PATH:/u00/app/oracle/product/weblogic-12.1.3/wlserver/common/bin:/u00/app/oracle/product/weblogic-12.1.3/user_projects/domains/base_domain/bin" >> /root/.bashrc
+
+# Configuration of WLS Domain
+#=========================================
+USER oracle
+WORKDIR /u00/app/oracle/product/weblogic-12.1.3
+RUN /u00/app/oracle/product/weblogic-12.1.3/wlserver/common/bin/wlst.sh -skipWLSModuleScanning /u00/oracle/create-wls-domain.py && \
+    mkdir -p /u00/app/oracle/product/weblogic-12.1.3/user_projects/domains/base_domain/servers/AdminServer/security && \
+    mv /u00/oracle/commEnv.sh /u00/app/oracle/product/weblogic-12.1.3/wlserver/common/bin/commEnv.sh && \
+    echo "username=weblogic" > /u00/app/oracle/product/weblogic-12.1.3/user_projects/domains/base_domain/servers/AdminServer/security/boot.properties && \ 
+    echo "password=$ADMIN_PASSWORD" >> /u00/app/oracle/product/weblogic-12.1.3/user_projects/domains/base_domain/servers/AdminServer/security/boot.properties && \
+    echo ". /u00/app/oracle/product/weblogic-12.1.3/user_projects/domains/base_domain/bin/setDomainEnv.sh" >> /u00/oracle/.bashrc && \ 
+    echo "export PATH=$PATH:/u00/app/oracle/product/weblogic-12.1.3/wlserver/common/bin:/u00/app/oracle/product/weblogic-12.1.3/user_projects/domains/base_domain/bin" >> /u00/oracle/.bashrc 
+    #rm /u00/oracle/create-wls-domain.py /u00/oracle/jaxrs2-template.jar 
+
+# Expose Node Manager default port, and also default http ports for Admin Console and Managed Server
+#=========================================
+EXPOSE $NM_PORT $ADMIN_PORT $MS_PORT
+
+# Final setup
+#=========================================
+WORKDIR /u00/oracle
+
+ENV PATH $PATH:/u00/app/oracle/product/weblogic-12.1.3/wlserver/common/bin:/u00/app/oracle/product/weblogic-12.1.3/user_projects/domains/base_domain/bin:/u00/oracle
+
+# Define default command to start bash 
+#=========================================
+CMD ["bash"]

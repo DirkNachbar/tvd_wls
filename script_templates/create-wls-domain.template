@@ -1,0 +1,116 @@
+#=====================================================================
+#
+# Author: Dirk Nachbar, Trivadis AG, Bern Switzerland
+#
+# Purpose: script template for creating a WLS Domain
+#
+#
+#====================================================================
+
+
+# Define required Variables
+#==========================================================
+admin_port = int(os.environ.get("ADMIN_PORT", "<AdminPort>"))
+admin_pass = os.environ.get("ADMIN_PASSWORD", "<AdminPassword>")
+
+# Open default domain template
+#==========================================================
+readTemplate("/u00/app/oracle/product/weblogic-12.1.3/wlserver/common/templates/wls/wls.jar")
+
+# Configure the Administration Server and port
+#==========================================================
+cd('Servers/AdminServer')
+set('ListenAddress','')
+set('ListenPort', admin_port)
+
+# Define the user password for weblogic
+#==========================================================
+cd('/')
+cd('Security/base_domain/User/weblogic')
+cmo.setPassword(admin_pass)
+
+# Create a JMS Server
+#==========================================================
+cd('/')
+create('DemoJMSServer', 'JMSServer')
+
+# Create a JMS System resource
+# ============================
+cd('/')
+create('DemoJmsSystemResource', 'JMSSystemResource')
+cd('JMSSystemResource/DemoJmsSystemResource/JmsResource/NO_NAME_0')
+
+# Create a JMS Queue and its subdeployment
+# ========================================
+myq=create('DemoQueue','Queue')
+myq.setJNDIName('jms/demoqueue')
+myq.setSubDeploymentName('DemoQueueSubDeployment')
+
+cd('/')
+cd('JMSSystemResource/DemoJmsSystemResource')
+create('DemoQueueSubDeployment', 'SubDeployment')
+
+# Create and configure a JDBC Data Source, and sets the JDBC user
+# ===============================================================
+# IF YOU WANT TO HAVE A DEFAULT DATA SOURCE CREATED, UNCOMMENT THIS SECTION BEFORE BUILD
+
+# cd('/')
+# create('myDataSource', 'JDBCSystemResource')
+# cd('JDBCSystemResource/myDataSource/JdbcResource/myDataSource')
+# create('myJdbcDriverParams','JDBCDriverParams')
+# cd('JDBCDriverParams/NO_NAME_0')
+# set('DriverName','org.apache.derby.jdbc.ClientDriver')
+# set('URL','jdbc:derby://localhost:1527/db;create=true')
+# set('PasswordEncrypted', 'PBPUBLIC')
+# set('UseXADataSourceInterface', 'false')
+# create('myProps','Properties')
+# cd('Properties/NO_NAME_0')
+# create('user', 'Property')
+# cd('Property/user')
+# cmo.setValue('PBPUBLIC')
+
+# cd('/JDBCSystemResource/myDataSource/JdbcResource/myDataSource')
+# create('myJdbcDataSourceParams','JDBCDataSourceParams')
+# cd('JDBCDataSourceParams/NO_NAME_0')
+# set('JNDIName', java.lang.String("myDataSource_jndi"))
+
+# cd('/JDBCSystemResource/myDataSource/JdbcResource/myDataSource')
+# create('myJdbcConnectionPoolParams','JDBCConnectionPoolParams')
+# cd('JDBCConnectionPoolParams/NO_NAME_0')
+# set('TestTableName','SYSTABLES')
+
+# Target resources to the servers 
+# ===============================
+cd('/')
+assign('JMSServer', 'DemoJMSServer', 'Target', 'AdminServer')
+assign('JMSSystemResource.SubDeployment', 'DemoJmsSystemResource.DemoQueueSubDeployment', 'Target', 'DemoJMSServer')
+# assign('JDBCSystemResource', 'myDataSource', 'Target', 'AdminServer')
+
+# Write the domain and close the domain template
+# ==============================================
+setOption('OverwriteDomain', 'true')
+setOption('ServerStartMode','prod')
+
+cd('/')
+cd('NMProperties')
+set('ListenAddress','')
+set('ListenPort',<NodeManagerPort>)
+set('NativeVersionEnabled', 'false')
+set('StartScriptEnabled', 'false')
+set('SecureListener', 'false')
+
+domain_path = '/u00/app/oracle/product/weblogic-12.1.3/user_projects/domains/base_domain'
+
+writeDomain(domain_path)
+closeTemplate()
+
+# Enable JAX-RS 2.0 by default on this domain
+# ===========================================
+readDomain(domain_path)
+addTemplate('/u00/oracle/jaxrs2-template.jar')
+updateDomain()
+closeDomain()
+
+# Exit WLST
+# =========
+exit()

@@ -1,0 +1,53 @@
+#==============================================================
+#
+# Author: Dirk Nachbar, Trivadis AG, Bern Switzerland
+#
+# Purpose: template script for creating Machine within
+#          Admin Server
+#          Script will be called via createMachine.sh
+#
+#==============================================================
+import os
+import socket
+
+# Functions
+def editMode():
+  edit()
+  startEdit()
+
+def editActivate():
+  save()
+  activate(block="true")
+
+# Define the required Variables
+# =========
+
+# Admin Server details
+username  = os.environ.get('ADMIN_USERNAME', 'weblogic')
+password  = os.environ.get('ADMIN_PASSWORD', '<AdminPassword>')
+adminhost = os.environ.get('ADMIN_HOST', '<WlsContainerName>')
+adminport = os.environ.get('ADMIN_PORT', '<AdminPort>')
+
+# Node Manager details
+nmname = os.environ.get('NM_NAME', 'Machine-' + socket.gethostname())
+nmhost = os.environ.get('NM_HOST', socket.gethostbyname(socket.gethostname()))
+nmport = os.environ.get('NM_PORT', '<NodeManagerPort>')
+
+# Connect to the Admin Server
+# ==========================
+connect(username, password, 't3://' + adminhost + ':' + adminport)
+
+# Create the Machine with PlainText
+# ================
+editMode()
+cd('/')
+cmo.createMachine(nmname)
+cd('/Machines/' + nmname +'/NodeManager/' + nmname)
+cmo.setListenPort(int(nmport))
+cmo.setListenAddress(nmhost)
+cmo.setNMType('Plain')
+editActivate()
+
+# Exit
+# ====
+exit()
