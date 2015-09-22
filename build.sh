@@ -215,7 +215,7 @@ ReadParams
 # Create the required files for Image build and WLS Domain Creation
 CreateBuildFiles
 
-echo "Done with preparationn tasks"
+echo "Done with preparation tasks"
 
 cd ${TheImageName}
 
@@ -255,7 +255,7 @@ sleep 60
 TheContainerIP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${TheWlsContainerName})
 echo "Admin server can be reached either via"
 echo "Docker internal IP: http://${TheContainerIP}:${TheAdminPort}/console"
-echo "Docker server IP: http://xxx:${TheAdminPort}/console"
+echo "Docker server IP: http://<Dockerhost>:${TheAdminPort}/console"
 
 
 # Node Manager creation and startup
