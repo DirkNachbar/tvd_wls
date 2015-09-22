@@ -49,6 +49,9 @@ ReadParams()
 # PURPOSE: Reads the Parmeters of the Configfile.
 #---------------------------------------------------------------------
 {
+# Start Message of reading parameters from provided configuration file
+echo "Starting to read parameters from configuration file ${ConfigFile}"
+
 TheVersion="$(cat ${ConfigFile} | grep -i "^Version=" | head -n 1 | cut -d= -f2-)"
 TheImageName="$(cat ${ConfigFile} | grep -i "^ImageName=" | head -n 1 | cut -d= -f2-)"
 TheJdkRpm="$(cat ${ConfigFile} | grep -i "^JdkRpm=" | head -n 1 | cut -d= -f2-)"
@@ -116,6 +119,7 @@ TheWlsContainerName="$(cat ${ConfigFile} | grep -i "^WlsContainerName=" | head -
         exit 0
     fi
 
+echo "Done with reading parameters from configuration file ${ConfigFile}"
 }
 
 #---------------------------------------------------------------------
@@ -124,6 +128,8 @@ CreateBuildFiles()
 # PURPOSE: Creates the required files for the WLS Image build
 #---------------------------------------------------------------------
 {
+# 
+echo "Starting to create subdirectory ${TheImageName} and populate all required files"
 
 # Create required files for Oracle WebLogic Server image installation
 mkdir ${TheImageName}
@@ -163,6 +169,7 @@ sed -i "s/<AdminPort>/${TheAdminPort}/g" ${TheImageName}/create_domain/add-machi
 sed -i "s/<NodeManagerPort>/${TheNodeManagerPort}/g" ${TheImageName}/create_domain/add-machine.py
 
 
+echo "Done with creating subdirectory ${TheImageName} and populating all required files"
 }
 
 
@@ -198,6 +205,7 @@ if [ $# -ne 0 ]; then
     Usage
 fi
 
+echo "Starting with preparation tasks ..."
 # Check Input Params
 CheckParams
 
@@ -207,21 +215,29 @@ ReadParams
 # Create the required files for Image build and WLS Domain Creation
 CreateBuildFiles
 
+echo "Done with preparationn tasks"
+
 cd ${TheImageName}
 
 # Build the Image
+echo "Starting with Docker Image WebLogic Server build process ..."
 echo "Docker Image build command"
 echo "Following Command will be executed:"
 echo "     docker build --force-rm=true --no-cache=true --rm=true -t ${TheImageName}:${TheVersion} ."
 docker build --force-rm=true --no-cache=true --rm=true -t ${TheImageName}:${TheVersion} . 
 
+echo "Done with Docker Image WebLogic Server build process"
+
 cd create_domain
 
 # Create the WLS Domain
+echo "Starting with Docker Image WebLogic Domain build process ..."
 echo "WLS Domain Creation"
 echo "Following Command will be executed:"
 echo "     docker build -t ${TheWlsImageName}:${TheVersion} ."
 docker build -t ${TheWlsImageName}:${TheVersion} .
+
+echo "Done with Docker Image WebLogic Domain build process"
 
 # Startup the Admin Server
 echo "Startup the newly created Admin Server on port ${TheAdminPort}"
@@ -243,13 +259,17 @@ echo "Docker server IP: http://xxx:${TheAdminPort}/console"
 
 
 # Node Manager creation and startup
-echo "Node Manager Creation"
+echo "Starting with Node Manager Creation"
 echo "Following Command will be executed:"
-echo "     docker -it ${TheWlsContainerName} createMachine.sh"
+echo "     docker exec -it ${TheWlsContainerName} createMachine.sh"
 docker exec -it ${TheWlsContainerName} createMachine.sh
+
+echo "Done with Node Manager Creation"
 
 echo "Done with Weblogic Server Installation and configuration on Docker"
 echo "****************************************************************************"
+echo "Following Docker Images are available:"
+docker images
 echo "Admin Server URL: http://${TheContainerIP}:${TheAdminPort}/console"
 echo "NodeManager Port: ${TheNodeManagerPort}"
 
